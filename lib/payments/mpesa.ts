@@ -120,11 +120,12 @@ class MpesaClient {
         }
       );
 
-      this.accessToken = response.data.access_token;
+      const token = response.data.access_token;
+      this.accessToken = token;
       // Set expiry to 5 minutes before actual expiry
       this.tokenExpiry = Date.now() + (parseInt(response.data.expires_in) - 300) * 1000;
 
-      return this.accessToken;
+      return token;
     } catch (error) {
       console.error('M-Pesa authentication error:', error);
       throw new Error('Failed to authenticate with M-Pesa');

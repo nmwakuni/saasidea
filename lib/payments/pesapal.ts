@@ -95,11 +95,12 @@ class PesapalClient {
         }
       );
 
-      this.accessToken = response.data.token;
+      const token = response.data.token;
+      this.accessToken = token;
       // Set expiry to 5 minutes before actual expiry (tokens usually last 1 hour)
       this.tokenExpiry = Date.now() + (response.data.expiryDate - 300) * 1000;
 
-      return this.accessToken;
+      return token;
     } catch (error) {
       console.error('Pesapal authentication error:', error);
       throw new Error('Failed to authenticate with Pesapal');

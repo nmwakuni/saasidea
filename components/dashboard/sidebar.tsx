@@ -19,6 +19,7 @@ import {
   Search,
   Code,
   Crown,
+  CreditCard,
 } from 'lucide-react';
 
 const navigation = [
@@ -36,6 +37,7 @@ const navigation = [
   { name: 'Brand Voice', href: '/dashboard/brand', icon: Zap },
   { name: 'White-Label', href: '/dashboard/white-label', icon: Crown },
   { name: 'Team', href: '/dashboard/team', icon: Users },
+  { name: 'Billing', href: '/dashboard/billing', icon: CreditCard },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
@@ -98,7 +100,7 @@ export function Sidebar() {
                   3 of 10 content pieces used this month
                 </div>
                 <Link
-                  href="/dashboard/settings/billing"
+                  href="/dashboard/billing"
                   className="block w-full rounded-md bg-white/20 px-3 py-2 text-center text-xs font-semibold hover:bg-white/30 transition-colors"
                 >
                   Upgrade Plan
