@@ -14,6 +14,11 @@ import {
   Mail,
   Calendar,
   Zap,
+  Webhook,
+  Share2,
+  Search,
+  Code,
+  Crown,
 } from 'lucide-react';
 
 const navigation = [
@@ -24,7 +29,12 @@ const navigation = [
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
   { name: 'Email Sequences', href: '/dashboard/email', icon: Mail },
   { name: 'Social Scheduler', href: '/dashboard/scheduler', icon: Calendar },
+  { name: 'Integrations', href: '/dashboard/integrations', icon: Share2 },
+  { name: 'SEO Tools', href: '/dashboard/seo', icon: Search },
+  { name: 'Webhooks', href: '/dashboard/webhooks', icon: Webhook },
+  { name: 'API Docs', href: '/dashboard/api-docs', icon: Code },
   { name: 'Brand Voice', href: '/dashboard/brand', icon: Zap },
+  { name: 'White-Label', href: '/dashboard/white-label', icon: Crown },
   { name: 'Team', href: '/dashboard/team', icon: Users },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
