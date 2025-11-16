@@ -7,6 +7,8 @@ import { z } from 'zod';
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
 export const subscriptionTierEnum = pgEnum('subscription_tier', ['free', 'creator', 'pro', 'agency', 'enterprise']);
 export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', 'canceled', 'past_due', 'trialing']);
+export const paymentMethodEnum = pgEnum('payment_method', ['stripe', 'pesapal', 'mpesa']);
+export const transactionStatusEnum = pgEnum('transaction_status', ['pending', 'completed', 'failed', 'refunded']);
 export const contentTypeEnum = pgEnum('content_type', ['video', 'audio', 'text', 'podcast', 'webinar']);
 export const outputTypeEnum = pgEnum('output_type', [
   'linkedin_post',
@@ -82,11 +84,49 @@ export const subscriptions = pgTable('subscription', {
     .references(() => users.id, { onDelete: 'cascade' }),
   stripeCustomerId: text('stripeCustomerId').unique(),
   stripeSubscriptionId: text('stripeSubscriptionId').unique(),
+  paymentMethod: paymentMethodEnum('paymentMethod').default('stripe'),
   tier: subscriptionTierEnum('tier').notNull().default('free'),
   status: subscriptionStatusEnum('status').notNull().default('active'),
   currentPeriodStart: timestamp('currentPeriodStart'),
   currentPeriodEnd: timestamp('currentPeriodEnd'),
   cancelAtPeriodEnd: boolean('cancelAtPeriodEnd').default(false),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+});
+
+// Transactions (for payment tracking)
+export const transactions = pgTable('transaction', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('userId')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  subscriptionId: uuid('subscriptionId').references(() => subscriptions.id, { onDelete: 'set null' }),
+  paymentMethod: paymentMethodEnum('paymentMethod').notNull(),
+  status: transactionStatusEnum('status').notNull().default('pending'),
+  amount: integer('amount').notNull(), // Amount in cents/smallest currency unit
+  currency: text('currency').notNull().default('USD'),
+  tier: subscriptionTierEnum('tier').notNull(),
+
+  // Payment gateway references
+  stripePaymentIntentId: text('stripePaymentIntentId'),
+  pesapalOrderTrackingId: text('pesapalOrderTrackingId'),
+  pesapalMerchantReference: text('pesapalMerchantReference'),
+  pesapalConfirmationCode: text('pesapalConfirmationCode'),
+  mpesaCheckoutRequestId: text('mpesaCheckoutRequestId'),
+  mpesaMerchantRequestId: text('mpesaMerchantRequestId'),
+  mpesaReceiptNumber: text('mpesaReceiptNumber'),
+
+  // Customer details
+  customerEmail: text('customerEmail'),
+  customerPhone: text('customerPhone'),
+  customerName: text('customerName'),
+
+  // Payment metadata
+  metadata: jsonb('metadata'),
+  errorMessage: text('errorMessage'),
+  paidAt: timestamp('paidAt'),
+  refundedAt: timestamp('refundedAt'),
+
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 });
@@ -179,6 +219,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
   accounts: many(accounts),
   subscription: one(subscriptions),
+  transactions: many(transactions),
   brands: many(brands),
   projects: many(projects),
   outputs: many(outputs),
@@ -186,10 +227,22 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   teamMemberships: many(teamMembers),
 }));
 
-export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+export const subscriptionsRelations = relations(subscriptions, ({ one, many }) => ({
   user: one(users, {
     fields: [subscriptions.userId],
     references: [users.id],
+  }),
+  transactions: many(transactions),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  user: one(users, {
+    fields: [transactions.userId],
+    references: [users.id],
+  }),
+  subscription: one(subscriptions, {
+    fields: [transactions.subscriptionId],
+    references: [subscriptions.id],
   }),
 }));
 
@@ -259,6 +312,9 @@ export const selectBrandSchema = createSelectSchema(brands);
 export const insertSubscriptionSchema = createInsertSchema(subscriptions);
 export const selectSubscriptionSchema = createSelectSchema(subscriptions);
 
+export const insertTransactionSchema = createInsertSchema(transactions);
+export const selectTransactionSchema = createSelectSchema(transactions);
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -274,6 +330,9 @@ export type InsertBrand = typeof brands.$inferInsert;
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertTransaction = typeof transactions.$inferInsert;
 
 export type Team = typeof teams.$inferSelect;
 export type InsertTeam = typeof teams.$inferInsert;
